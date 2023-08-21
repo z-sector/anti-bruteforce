@@ -19,3 +19,8 @@
 
 # Go workspace file
 go.work
+
+# JetBrains IDE
+.idea/
+
+docker_prune.sh
