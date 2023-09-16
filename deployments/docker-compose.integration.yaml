@@ -1,0 +1,54 @@
+services:
+  pg:
+    image: postgres:15.4
+    restart: always
+    expose:
+      - "5432"
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    command: [ "postgres", "-c", "log_statement=all", "-c", "log_min_messages=INFO", "-c", "log_min_duration_statement=0" ]
+    healthcheck:
+      test: [ 'CMD-SHELL', 'psql -U $${POSTGRES_USER} -c "select 1" -d $${POSTGRES_DB}' ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  migrator:
+    build:
+      context: ../
+      dockerfile: ./build/migrator/Dockerfile
+    environment:
+      PG_URL: postgres://user:password@pg:5432/db?sslmode=disable
+    volumes:
+      - ../migrations:/migrations
+    depends_on:
+      pg:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.2
+    restart: always
+    expose:
+      - "6379"
+    command: [ "redis-server", "--save", "60", "1", "--loglevel", "warning" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  test:
+    build:
+      context: ../
+      dockerfile: ./build/test/Dockerfile
+    environment:
+      APP_PG_DSN: postgres://user:password@pg:5432/db
+      APP_REDIS_DSN: redis://redis:6379
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
