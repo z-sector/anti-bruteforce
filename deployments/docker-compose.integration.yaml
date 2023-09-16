@@ -40,6 +40,28 @@ services:
       timeout: 3s
       retries: 5
 
+  service:
+    build:
+      context: ../
+      dockerfile: ./build/service/Dockerfile
+    environment:
+      APP_PORT: 9000
+      APP_PG_DSN: postgres://user:password@pg:5432/db
+      APP_REDIS_DSN: redis://redis:6379
+      APP_LIMIT_BURST_LOGIN: 1
+      APP_LIMIT_PERIOD_LOGIN: 1s
+      APP_LIMIT_BURST_PASSWORD: 1
+      APP_LIMIT_PERIOD_PASSWORD: 1s
+      APP_LIMIT_BURST_IP: 1
+      APP_LIMIT_PERIOD_IP: 1s
+    expose:
+      - "9000"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
   test:
     build:
       context: ../
@@ -47,8 +69,11 @@ services:
     environment:
       APP_PG_DSN: postgres://user:password@pg:5432/db
       APP_REDIS_DSN: redis://redis:6379
+      APP_SERVICE_HOST: service:9000
     depends_on:
       migrator:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      service:
+        condition: service_started
