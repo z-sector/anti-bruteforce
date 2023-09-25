@@ -5,7 +5,7 @@
 package mock_grpc
 
 import (
-	pb "anti_bruteforce/internal/delivery/grpc/pb"
+	models "anti_bruteforce/internal/models"
 	context "context"
 	reflect "reflect"
 
@@ -64,18 +64,18 @@ func (mr *MockUseCaseIMockRecorder) AddToWhiteList(ctx, subnet interface{}) *gom
 }
 
 // CheckAuth mocks base method.
-func (m *MockUseCaseI) CheckAuth(ctx context.Context, in *pb.AuthCheckRequest) (bool, error) {
+func (m *MockUseCaseI) CheckAuth(ctx context.Context, data models.AuthCheck) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckAuth", ctx, in)
+	ret := m.ctrl.Call(m, "CheckAuth", ctx, data)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CheckAuth indicates an expected call of CheckAuth.
-func (mr *MockUseCaseIMockRecorder) CheckAuth(ctx, in interface{}) *gomock.Call {
+func (mr *MockUseCaseIMockRecorder) CheckAuth(ctx, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAuth", reflect.TypeOf((*MockUseCaseI)(nil).CheckAuth), ctx, in)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAuth", reflect.TypeOf((*MockUseCaseI)(nil).CheckAuth), ctx, data)
 }
 
 // ClearLists mocks base method.
@@ -120,16 +120,16 @@ func (mr *MockUseCaseIMockRecorder) RemoveFromWhiteList(ctx, subnet interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFromWhiteList", reflect.TypeOf((*MockUseCaseI)(nil).RemoveFromWhiteList), ctx, subnet)
 }
 
-// Reset mocks base method.
-func (m *MockUseCaseI) Reset(ctx context.Context, in *pb.AuthCheckRequest) error {
+// ResetBucket mocks base method.
+func (m *MockUseCaseI) ResetBucket(ctx context.Context, data models.ResetBucketData) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Reset", ctx, in)
+	ret := m.ctrl.Call(m, "ResetBucket", ctx, data)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Reset indicates an expected call of Reset.
-func (mr *MockUseCaseIMockRecorder) Reset(ctx, in interface{}) *gomock.Call {
+// ResetBucket indicates an expected call of ResetBucket.
+func (mr *MockUseCaseIMockRecorder) ResetBucket(ctx, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockUseCaseI)(nil).Reset), ctx, in)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetBucket", reflect.TypeOf((*MockUseCaseI)(nil).ResetBucket), ctx, data)
 }

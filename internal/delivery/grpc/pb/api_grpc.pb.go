@@ -26,7 +26,7 @@ const (
 	AntiBruteForceService_RemoveFromWhiteList_FullMethodName = "/AntiBruteForceService/RemoveFromWhiteList"
 	AntiBruteForceService_ClearLists_FullMethodName          = "/AntiBruteForceService/ClearLists"
 	AntiBruteForceService_AuthCheck_FullMethodName           = "/AntiBruteForceService/AuthCheck"
-	AntiBruteForceService_Reset_FullMethodName               = "/AntiBruteForceService/Reset"
+	AntiBruteForceService_ResetBucket_FullMethodName         = "/AntiBruteForceService/ResetBucket"
 )
 
 // AntiBruteForceServiceClient is the client API for AntiBruteForceService service.
@@ -39,7 +39,7 @@ type AntiBruteForceServiceClient interface {
 	RemoveFromWhiteList(ctx context.Context, in *SubnetAddress, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ClearLists(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AuthCheck(ctx context.Context, in *AuthCheckRequest, opts ...grpc.CallOption) (*AuthCheckResponse, error)
-	Reset(ctx context.Context, in *AuthCheckRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ResetBucket(ctx context.Context, in *ResetBucketRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type antiBruteForceServiceClient struct {
@@ -104,9 +104,9 @@ func (c *antiBruteForceServiceClient) AuthCheck(ctx context.Context, in *AuthChe
 	return out, nil
 }
 
-func (c *antiBruteForceServiceClient) Reset(ctx context.Context, in *AuthCheckRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *antiBruteForceServiceClient) ResetBucket(ctx context.Context, in *ResetBucketRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, AntiBruteForceService_Reset_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, AntiBruteForceService_ResetBucket_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ type AntiBruteForceServiceServer interface {
 	RemoveFromWhiteList(context.Context, *SubnetAddress) (*emptypb.Empty, error)
 	ClearLists(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	AuthCheck(context.Context, *AuthCheckRequest) (*AuthCheckResponse, error)
-	Reset(context.Context, *AuthCheckRequest) (*emptypb.Empty, error)
+	ResetBucket(context.Context, *ResetBucketRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedAntiBruteForceServiceServer()
 }
 
@@ -149,8 +149,8 @@ func (UnimplementedAntiBruteForceServiceServer) ClearLists(context.Context, *emp
 func (UnimplementedAntiBruteForceServiceServer) AuthCheck(context.Context, *AuthCheckRequest) (*AuthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthCheck not implemented")
 }
-func (UnimplementedAntiBruteForceServiceServer) Reset(context.Context, *AuthCheckRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Reset not implemented")
+func (UnimplementedAntiBruteForceServiceServer) ResetBucket(context.Context, *ResetBucketRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetBucket not implemented")
 }
 func (UnimplementedAntiBruteForceServiceServer) mustEmbedUnimplementedAntiBruteForceServiceServer() {}
 
@@ -273,20 +273,20 @@ func _AntiBruteForceService_AuthCheck_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AntiBruteForceService_Reset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthCheckRequest)
+func _AntiBruteForceService_ResetBucket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResetBucketRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AntiBruteForceServiceServer).Reset(ctx, in)
+		return srv.(AntiBruteForceServiceServer).ResetBucket(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AntiBruteForceService_Reset_FullMethodName,
+		FullMethod: AntiBruteForceService_ResetBucket_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AntiBruteForceServiceServer).Reset(ctx, req.(*AuthCheckRequest))
+		return srv.(AntiBruteForceServiceServer).ResetBucket(ctx, req.(*ResetBucketRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -323,8 +323,8 @@ var AntiBruteForceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AntiBruteForceService_AuthCheck_Handler,
 		},
 		{
-			MethodName: "Reset",
-			Handler:    _AntiBruteForceService_Reset_Handler,
+			MethodName: "ResetBucket",
+			Handler:    _AntiBruteForceService_ResetBucket_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

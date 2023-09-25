@@ -172,9 +172,17 @@ func (s *apiTestSuite) TestAuthCheckByIPLimit() {
 		s.Require().False(res.Accepted)
 	}
 
-	_, err = s.client.Reset(s.ctx, request)
+	resetRequest := &pb.ResetBucketRequest{
+		Login: "",
+		Ip:    request.GetIp(),
+	}
+
+	_, err = s.client.ResetBucket(s.ctx, resetRequest)
 
 	s.Require().NoError(err)
+
+	request.Login = request.Login + "new"
+	request.Password = request.Password + "new"
 
 	res, err = s.client.AuthCheck(s.ctx, request)
 
@@ -206,9 +214,17 @@ func (s *apiTestSuite) TestAuthCheckByLoginLimit() {
 		s.Require().False(res.Accepted)
 	}
 
-	_, err = s.client.Reset(s.ctx, request)
+	resetRequest := &pb.ResetBucketRequest{
+		Login: request.GetLogin(),
+		Ip:    "",
+	}
+
+	_, err = s.client.ResetBucket(s.ctx, resetRequest)
 
 	s.Require().NoError(err)
+
+	request.Ip = rawIP + "255"
+	request.Password = request.Password + "new"
 
 	res, err = s.client.AuthCheck(s.ctx, request)
 
@@ -239,13 +255,4 @@ func (s *apiTestSuite) TestAuthCheckByPasswordLimit() {
 		s.Require().NoError(err)
 		s.Require().False(res.Accepted)
 	}
-
-	_, err = s.client.Reset(s.ctx, request)
-
-	s.Require().NoError(err)
-
-	res, err = s.client.AuthCheck(s.ctx, request)
-
-	s.Require().NoError(err)
-	s.Require().True(res.Accepted)
 }

@@ -11,7 +11,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"anti_bruteforce/internal"
-	"anti_bruteforce/internal/delivery/grpc/pb"
+	"anti_bruteforce/internal/models"
 	mock_usecase "anti_bruteforce/internal/usecase/mocks"
 )
 
@@ -172,22 +172,21 @@ func TestAppUseCase_ClearLists(t *testing.T) {
 func TestAppUseCase_Reset(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		_, mockBucket, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
-		mockBucket.EXPECT().ResetLogin(gomock.Any(), request.GetLogin()).Return(nil).Times(1)
-		mockBucket.EXPECT().ResetPassword(gomock.Any(), request.GetPassword()).Return(nil).Times(1)
-		mockBucket.EXPECT().ResetIP(gomock.Any(), net.ParseIP(request.Ip)).Return(nil).Times(1)
+		request := getResetBucketData(t)
+		mockBucket.EXPECT().ResetLogin(gomock.Any(), request.Login).Return(nil).Times(1)
+		mockBucket.EXPECT().ResetIP(gomock.Any(), net.ParseIP(request.IP)).Return(nil).Times(1)
 
-		err := uc.Reset(context.Background(), request)
+		err := uc.ResetBucket(context.Background(), request)
 
 		require.NoError(t, err)
 	})
 
 	t.Run("invalid ip", func(t *testing.T) {
 		_, _, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
-		request.Ip = "111"
+		request := getResetBucketData(t)
+		request.IP = "111"
 
-		err := uc.Reset(context.Background(), request)
+		err := uc.ResetBucket(context.Background(), request)
 
 		require.ErrorIs(t, err, internal.ErrInvalidIP)
 	})
@@ -196,7 +195,7 @@ func TestAppUseCase_Reset(t *testing.T) {
 func TestAppUseCase_CheckAuth(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mockStorage, mockBucket, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
+		request := getAuthCheck(t)
 		gomock.InOrder(
 			mockStorage.EXPECT().
 				CheckInWhiteList(gomock.Any(), gomock.AssignableToTypeOf(net.IP{})).
@@ -207,8 +206,8 @@ func TestAppUseCase_CheckAuth(t *testing.T) {
 				Return(false, nil).
 				Times(1),
 		)
-		mockBucket.EXPECT().CheckLogin(gomock.Any(), request.GetLogin()).Return(true, nil).Times(1)
-		mockBucket.EXPECT().CheckPassword(gomock.Any(), request.GetPassword()).Return(true, nil).Times(1)
+		mockBucket.EXPECT().CheckLogin(gomock.Any(), request.Login).Return(true, nil).Times(1)
+		mockBucket.EXPECT().CheckPassword(gomock.Any(), request.Password).Return(true, nil).Times(1)
 		mockBucket.EXPECT().CheckIP(gomock.Any(), gomock.AssignableToTypeOf(net.IP{})).Return(true, nil).Times(1)
 
 		res, err := uc.CheckAuth(context.Background(), request)
@@ -219,7 +218,7 @@ func TestAppUseCase_CheckAuth(t *testing.T) {
 
 	t.Run("required fields error", func(t *testing.T) {
 		_, _, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
+		request := getAuthCheck(t)
 		request.Login = ""
 
 		_, err := uc.CheckAuth(context.Background(), request)
@@ -229,8 +228,8 @@ func TestAppUseCase_CheckAuth(t *testing.T) {
 
 	t.Run("invalid ip", func(t *testing.T) {
 		_, _, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
-		request.Ip = "123"
+		request := getAuthCheck(t)
+		request.IP = "123"
 
 		_, err := uc.CheckAuth(context.Background(), request)
 
@@ -239,7 +238,7 @@ func TestAppUseCase_CheckAuth(t *testing.T) {
 
 	t.Run("is in whitelist", func(t *testing.T) {
 		mockStorage, _, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
+		request := getAuthCheck(t)
 		mockStorage.EXPECT().
 			CheckInWhiteList(gomock.Any(), gomock.AssignableToTypeOf(net.IP{})).
 			Return(true, nil).
@@ -253,7 +252,7 @@ func TestAppUseCase_CheckAuth(t *testing.T) {
 
 	t.Run("is in blacklist", func(t *testing.T) {
 		mockStorage, _, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
+		request := getAuthCheck(t)
 		gomock.InOrder(
 			mockStorage.EXPECT().
 				CheckInWhiteList(gomock.Any(), gomock.AssignableToTypeOf(net.IP{})).
@@ -273,7 +272,7 @@ func TestAppUseCase_CheckAuth(t *testing.T) {
 
 	t.Run("is in bucket by password", func(t *testing.T) {
 		mockStorage, mockBucket, uc := getMockStorageAndMockBucketAndUseCase(t)
-		request := getRequest(t)
+		request := getAuthCheck(t)
 		gomock.InOrder(
 			mockStorage.EXPECT().
 				CheckInWhiteList(gomock.Any(), gomock.AssignableToTypeOf(net.IP{})).
@@ -284,8 +283,8 @@ func TestAppUseCase_CheckAuth(t *testing.T) {
 				Return(false, nil).
 				Times(1),
 		)
-		mockBucket.EXPECT().CheckLogin(gomock.Any(), request.GetLogin()).Return(true, nil).Times(1)
-		mockBucket.EXPECT().CheckPassword(gomock.Any(), request.GetPassword()).Return(false, nil).Times(1)
+		mockBucket.EXPECT().CheckLogin(gomock.Any(), request.Login).Return(true, nil).Times(1)
+		mockBucket.EXPECT().CheckPassword(gomock.Any(), request.Password).Return(false, nil).Times(1)
 		mockBucket.EXPECT().CheckIP(gomock.Any(), gomock.AssignableToTypeOf(net.IP{})).Return(true, nil).Times(1)
 
 		res, err := uc.CheckAuth(context.Background(), request)
@@ -303,14 +302,24 @@ func getIPNet(t *testing.T) *net.IPNet {
 	return ipNet
 }
 
-func getRequest(t *testing.T) *pb.AuthCheckRequest {
+func getAuthCheck(t *testing.T) models.AuthCheck {
 	t.Helper()
 
 	ipNet := getIPNet(t)
-	return &pb.AuthCheckRequest{
+	return models.AuthCheck{
 		Login:    "login",
 		Password: "password",
-		Ip:       ipNet.IP.String(),
+		IP:       ipNet.IP.String(),
+	}
+}
+
+func getResetBucketData(t *testing.T) models.ResetBucketData {
+	t.Helper()
+
+	ipNet := getIPNet(t)
+	return models.ResetBucketData{
+		Login: "login",
+		IP:    ipNet.IP.String(),
 	}
 }
 

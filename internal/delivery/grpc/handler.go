@@ -7,6 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"anti_bruteforce/internal/delivery/grpc/pb"
+	"anti_bruteforce/internal/models"
 )
 
 type UseCaseI interface {
@@ -15,8 +16,8 @@ type UseCaseI interface {
 	AddToWhiteList(ctx context.Context, subnet string) error
 	RemoveFromWhiteList(ctx context.Context, subnet string) error
 	ClearLists(ctx context.Context) error
-	CheckAuth(ctx context.Context, in *pb.AuthCheckRequest) (bool, error)
-	Reset(ctx context.Context, in *pb.AuthCheckRequest) error
+	CheckAuth(ctx context.Context, data models.AuthCheck) (bool, error)
+	ResetBucket(ctx context.Context, data models.ResetBucketData) error
 }
 
 type HandlerGrpc struct {
@@ -65,15 +66,26 @@ func (h *HandlerGrpc) ClearLists(ctx context.Context, _ *emptypb.Empty) (*emptyp
 }
 
 func (h *HandlerGrpc) AuthCheck(ctx context.Context, in *pb.AuthCheckRequest) (*pb.AuthCheckResponse, error) {
-	ok, err := h.uc.CheckAuth(ctx, in)
+	data := models.AuthCheck{
+		Login:    in.GetLogin(),
+		Password: in.GetPassword(),
+		IP:       in.GetIp(),
+	}
+
+	ok, err := h.uc.CheckAuth(ctx, data)
 	if err != nil {
 		return nil, err
 	}
 	return &pb.AuthCheckResponse{Accepted: ok}, nil
 }
 
-func (h *HandlerGrpc) Reset(ctx context.Context, in *pb.AuthCheckRequest) (*emptypb.Empty, error) {
-	if err := h.uc.Reset(ctx, in); err != nil {
+func (h *HandlerGrpc) ResetBucket(ctx context.Context, in *pb.ResetBucketRequest) (*emptypb.Empty, error) {
+	data := models.ResetBucketData{
+		Login: in.GetLogin(),
+		IP:    in.GetIp(),
+	}
+
+	if err := h.uc.ResetBucket(ctx, data); err != nil {
 		return nil, err
 	}
 	return &emptypb.Empty{}, nil

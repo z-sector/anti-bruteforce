@@ -13,6 +13,7 @@ import (
 
 	mock_grpc "anti_bruteforce/internal/delivery/grpc/mocks"
 	"anti_bruteforce/internal/delivery/grpc/pb"
+	"anti_bruteforce/internal/models"
 )
 
 func TestHandlerGrpc_AddToBlackList(t *testing.T) {
@@ -176,8 +177,13 @@ func TestHandlerGrpc_AuthCheck(t *testing.T) {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("case №%d", i), func(t *testing.T) {
 			mockUC, hdl := getMockUCAndHandler(t)
-			request := getRequest(t)
-			mockUC.EXPECT().CheckAuth(gomock.Any(), request).Return(tc.wontAccepted, tc.expectedErr).Times(1)
+			request := getAuthCheckRequest(t)
+			authCheck := models.AuthCheck{
+				Login:    request.GetLogin(),
+				Password: request.GetPassword(),
+				IP:       request.GetIp(),
+			}
+			mockUC.EXPECT().CheckAuth(gomock.Any(), authCheck).Return(tc.wontAccepted, tc.expectedErr).Times(1)
 
 			res, err := hdl.AuthCheck(context.Background(), request)
 
@@ -205,10 +211,14 @@ func TestHandlerGrpc_Reset(t *testing.T) {
 		tc := testcases[i]
 		t.Run(fmt.Sprintf("case №%d", i), func(t *testing.T) {
 			mockUC, hdl := getMockUCAndHandler(t)
-			request := getRequest(t)
-			mockUC.EXPECT().Reset(gomock.Any(), request).Return(tc.expectedErr).Times(1)
+			request := getResetBucketRequest(t)
+			data := models.ResetBucketData{
+				Login: request.GetLogin(),
+				IP:    request.GetIp(),
+			}
+			mockUC.EXPECT().ResetBucket(gomock.Any(), data).Return(tc.expectedErr).Times(1)
 
-			res, err := hdl.Reset(context.Background(), request)
+			res, err := hdl.ResetBucket(context.Background(), request)
 
 			require.ErrorIs(t, err, tc.expectedErr)
 			if tc.expectedErr == nil {
@@ -232,11 +242,19 @@ func getSubnetAddress(t *testing.T) *pb.SubnetAddress {
 	return &pb.SubnetAddress{SubnetAddress: "192.168.0.1/32"}
 }
 
-func getRequest(t *testing.T) *pb.AuthCheckRequest {
+func getAuthCheckRequest(t *testing.T) *pb.AuthCheckRequest {
 	t.Helper()
 	return &pb.AuthCheckRequest{
 		Login:    "login",
 		Password: "password",
 		Ip:       "192.168.0.5/32",
+	}
+}
+
+func getResetBucketRequest(t *testing.T) *pb.ResetBucketRequest {
+	t.Helper()
+	return &pb.ResetBucketRequest{
+		Login: "login",
+		Ip:    "192.168.0.5/32",
 	}
 }

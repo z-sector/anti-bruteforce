@@ -7,6 +7,8 @@ DCF_TEST := -p test -f deployments/docker-compose.integration.yaml
 SERVICE_BIN := "./bin/service"
 CLI_BIN := "./bin/cli"
 
+TEST_COUNT ?= 100
+
 install-lint-deps:
 	@(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.53.3
 
@@ -57,7 +59,7 @@ dc-down-prune:
 	docker compose $(DCF) down -v --rmi all
 
 test:
-	go test -v -race -count=100 ./internal/delivery/grpc ./internal/usecase
+	go test -v -race -count=$(TEST_COUNT) ./internal/delivery/grpc ./internal/usecase
 
 integration-tests:
 	docker compose $(DCF_TEST) down -v

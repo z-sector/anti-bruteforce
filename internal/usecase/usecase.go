@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"anti_bruteforce/internal"
-	"anti_bruteforce/internal/delivery/grpc/pb"
+	"anti_bruteforce/internal/models"
 )
 
 type StorageI interface {
@@ -114,12 +114,12 @@ func (u *AppUseCase) ClearLists(ctx context.Context) error {
 	return u.storage.ClearLists(ctx)
 }
 
-func (u *AppUseCase) CheckAuth(ctx context.Context, in *pb.AuthCheckRequest) (bool, error) {
-	if err := u.validateReqFields(in); err != nil {
+func (u *AppUseCase) CheckAuth(ctx context.Context, data models.AuthCheck) (bool, error) {
+	if err := u.validateReqFields(data); err != nil {
 		return false, err
 	}
 
-	ip := net.ParseIP(in.GetIp())
+	ip := net.ParseIP(data.IP)
 	if nil == ip {
 		return false, internal.ErrInvalidIP
 	}
@@ -132,26 +132,19 @@ func (u *AppUseCase) CheckAuth(ctx context.Context, in *pb.AuthCheckRequest) (bo
 		return ok, nil
 	}
 
-	return u.checkInBucket(ctx, in.GetLogin(), in.GetPassword(), ip)
+	return u.checkInBucket(ctx, data.Login, data.Password, ip)
 }
 
-func (u *AppUseCase) Reset(ctx context.Context, in *pb.AuthCheckRequest) error {
-	ip := net.ParseIP(in.GetIp())
-	if in.GetIp() != "" && nil == ip {
+func (u *AppUseCase) ResetBucket(ctx context.Context, data models.ResetBucketData) error {
+	ip := net.ParseIP(data.IP)
+	if data.IP != "" && nil == ip {
 		return internal.ErrInvalidIP
 	}
 
 	var err error
 
-	if in.GetLogin() != "" {
-		err = u.bucket.ResetLogin(ctx, in.GetLogin())
-		if err != nil {
-			return err
-		}
-	}
-
-	if in.GetPassword() != "" {
-		err = u.bucket.ResetPassword(ctx, in.GetPassword())
+	if data.Login != "" {
+		err = u.bucket.ResetLogin(ctx, data.Login)
 		if err != nil {
 			return err
 		}
@@ -167,16 +160,16 @@ func (u *AppUseCase) Reset(ctx context.Context, in *pb.AuthCheckRequest) error {
 	return nil
 }
 
-func (u *AppUseCase) validateReqFields(in *pb.AuthCheckRequest) error {
+func (u *AppUseCase) validateReqFields(data models.AuthCheck) error {
 	var errFields []string
 
-	if in.GetLogin() == "" {
+	if data.Login == "" {
 		errFields = append(errFields, "login")
 	}
-	if in.GetPassword() == "" {
+	if data.Password == "" {
 		errFields = append(errFields, "password")
 	}
-	if in.GetIp() == "" {
+	if data.IP == "" {
 		errFields = append(errFields, "ip")
 	}
 

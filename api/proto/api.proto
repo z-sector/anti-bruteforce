@@ -18,6 +18,11 @@ message AuthCheckResponse {
   bool accepted = 1;
 }
 
+message ResetBucketRequest {
+  string login = 1;
+  string ip = 2;
+}
+
 service AntiBruteForceService {
   rpc AddToBlackList (SubnetAddress) returns (google.protobuf.Empty) {}
   rpc RemoveFromBlackList (SubnetAddress) returns (google.protobuf.Empty) {}
@@ -25,5 +30,5 @@ service AntiBruteForceService {
   rpc RemoveFromWhiteList (SubnetAddress) returns (google.protobuf.Empty) {}
   rpc ClearLists (google.protobuf.Empty) returns (google.protobuf.Empty) {}
   rpc AuthCheck(AuthCheckRequest) returns (AuthCheckResponse) {}
-  rpc Reset(AuthCheckRequest) returns (google.protobuf.Empty) {}
+  rpc ResetBucket(ResetBucketRequest) returns (google.protobuf.Empty) {}
 }
